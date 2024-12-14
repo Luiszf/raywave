@@ -28,20 +28,31 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
 
+    // C:\Users\Luis\Downloads\id3lib-3.8.3binaries\id3lib-3.8.3binaries\Release
     const sdl = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2\\2.30.9\\include\\SDL2" };
     const sdl_mixer = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-mixer\\2.8.0\\include\\SDL2_mixer" };
+    const sdl_image = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-image\\2.8.2\\include\\SDL2_image" };
+    const sdl_ttf = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-ttf\\2.22.0\\include\\SDL2_ttf" };
     const hook = .{ .cwd_relative = "C:\\Users\\Luis\\Development\\libuiohook\\include" };
     const sdl_lib = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2\\2.30.9\\lib" };
     const sdl_mixer_lib = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-mixer\\2.8.0\\lib" };
+    const sdl_image_lib = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-image\\2.8.2\\lib" };
+    const sdl_ttf_lib = .{ .cwd_relative = "C:\\Users\\Luis\\scoop\\apps\\sdl2-ttf\\2.22.0\\lib" };
     const hook_lib = .{ .cwd_relative = "C:\\Users\\Luis\\Development\\libuiohook\\dist\\Debug\\" };
     exe.addLibraryPath(sdl_lib);
     exe.addLibraryPath(sdl_mixer_lib);
+    exe.addLibraryPath(sdl_image_lib);
+    exe.addLibraryPath(sdl_ttf_lib);
     exe.addLibraryPath(hook_lib);
     exe.addIncludePath(sdl);
     exe.addIncludePath(sdl_mixer);
+    exe.addIncludePath(sdl_image);
+    exe.addIncludePath(sdl_ttf);
     exe.addIncludePath(hook);
-    exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("SDL2_mixer");
+    exe.linkSystemLibrary("SDL2_image");
+    exe.linkSystemLibrary("SDL2_ttf");
+    exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("uiohook");
 
     //exe.addLibraryPath(b.path("C:\\Users\\Luis\\scoop\\apps\\sdl2\\2.30.9\\include\\SDL2"));
