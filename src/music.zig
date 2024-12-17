@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const settings = @import("settings.zig");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_mixer = @cImport(@cInclude("SDL_mixer.h"));
 const hook = @cImport(@cInclude("uiohook.h"));
@@ -10,8 +11,6 @@ pub const musicDisplayInfo = struct {
     artist: []const u8,
     picture: []const u8,
 };
-
-const music2_path = "C:\\Users\\Luis\\musics\\";
 
 const alloc = std.heap.page_allocator;
 pub var musics: std.ArrayList([]u8) = std.ArrayList([]u8).init(alloc);
@@ -34,11 +33,11 @@ pub fn setPosition(pos: f64) void {
 }
 
 pub fn playSongInIndex(i: u16) !void {
-    index = i;
-    nextMusic();
+    index = i + 1;
+    prevMusic();
 }
 pub fn insertSongToNextIndex(i: u16) !void {
-    try musics.insert(index, musics.orderedRemove(i));
+    try musics.insert(index + 1, musics.orderedRemove(i));
     nextMusic();
 }
 pub fn mute() void {
@@ -69,16 +68,16 @@ pub fn getCurrentMusicInfo() !void {
     }
 }
 pub fn prevMusic() void {
-    _ = sdl_mixer.Mix_HaltMusic();
+    sdl_mixer.Mix_FreeMusic(playingMusic);
     assert(musics.items.len < 10000);
     switch (index) {
-        0 => index = @intCast(musics.items.len - 1),
-        1 => index = @intCast(musics.items.len),
+        0 => index = @intCast(musics.items.len - 2),
+        1 => index = @intCast(musics.items.len - 1),
         else => index -= 2,
     }
 }
 pub fn nextMusic() void {
-    _ = sdl_mixer.Mix_HaltMusic();
+    sdl_mixer.Mix_FreeMusic(playingMusic);
 }
 
 fn dispacher(event: [*c]const hook.uiohook_event) callconv(.C) void {
@@ -104,16 +103,18 @@ pub fn init() !void {
     defer thread.detach();
 
     var iter = (try std.fs.openDirAbsolute(
-        "C:\\Users\\Luis\\musics",
+        settings.path,
         .{ .iterate = true },
     )).iterate();
 
     while (try iter.next()) |entry| {
         if (entry.kind == .file) {
             var name = std.ArrayList(u8).init(alloc);
-            try name.appendSlice(music2_path);
-            try name.appendSlice(entry.name);
+            const writer = name.writer();
+            _ = try writer.write(settings.path);
+            _ = try writer.write(entry.name);
             if (std.mem.endsWith(u8, entry.name, ".mp3")) {
+                try name.appendNTimes(32, 10);
                 try musics.append(name.items);
             }
         }
@@ -128,20 +129,23 @@ pub fn init() !void {
     _ = sdl_mixer.Mix_OpenAudio(22050, sdl_mixer.AUDIO_S16SYS, 2, 640);
     _ = sdl_mixer.Mix_Init(sdl_mixer.MIX_INIT_MP3);
     _ = sdl_mixer.Mix_VolumeMusic(volume);
+
+    index = @intCast(musics.items.len - 1);
 }
 
 pub fn play() !bool {
     const status = sdl_mixer.Mix_PlayingMusic();
     if (status == 0) {
-        playingMusic = sdl_mixer.Mix_LoadMUS(@ptrCast(musics.items[index]));
-        _ = sdl_mixer.Mix_PlayMusic(playingMusic, 0);
-        try getCurrentMusicInfo();
-        assert(musics.items.len < 10000);
-        if (musics.items.len < index) {
+        if ((musics.items.len - 1) == index) {
             index = 0;
         } else {
             index += 1;
         }
+        playingMusic = sdl_mixer.Mix_LoadMUS(@ptrCast(musics.items[index]));
+        _ = sdl_mixer.Mix_PlayMusic(playingMusic, 0);
+        try getCurrentMusicInfo();
+        assert(musics.items.len < 10000);
+
         sdl.SDL_Delay(34);
         return true;
     }
