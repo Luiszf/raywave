@@ -1,6 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
-const settings = @import("settings.zig");
+const config = @import("config.zig");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_mixer = @cImport(@cInclude("SDL_mixer.h"));
 const hook = @cImport(@cInclude("uiohook.h"));
@@ -97,13 +97,11 @@ fn hookRun() void {
     _ = hook.hook_run();
 }
 
-pub fn init() !void {
-    hook.hook_set_dispatch_proc(dispacher);
-    const thread = try std.Thread.spawn(.{}, hookRun, .{});
-    defer thread.detach();
+pub fn list_musics() !void {
+    musics.shrinkAndFree(0);
 
     var iter = (try std.fs.openDirAbsolute(
-        settings.path,
+        config.path,
         .{ .iterate = true },
     )).iterate();
 
@@ -111,7 +109,7 @@ pub fn init() !void {
         if (entry.kind == .file) {
             var name = std.ArrayList(u8).init(alloc);
             const writer = name.writer();
-            _ = try writer.write(settings.path);
+            _ = try writer.write(config.path);
             _ = try writer.write(entry.name);
             if (std.mem.endsWith(u8, entry.name, ".mp3")) {
                 try name.appendNTimes(32, 10);
@@ -119,10 +117,21 @@ pub fn init() !void {
             }
         }
     }
+}
+pub fn shuffle_musics() !void {
     var seed: u64 = undefined;
     try std.posix.getrandom(std.mem.asBytes(&seed));
     var rand = std.Random.Sfc64.init(seed);
     rand.random().shuffle([]u8, musics.items);
+}
+
+pub fn init() !void {
+    hook.hook_set_dispatch_proc(dispacher);
+    const thread = try std.Thread.spawn(.{}, hookRun, .{});
+    defer thread.detach();
+
+    try list_musics();
+    try shuffle_musics();
 
     _ = sdl.SDL_Init(sdl.SDL_INIT_AUDIO);
 
