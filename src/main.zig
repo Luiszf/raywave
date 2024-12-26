@@ -1,35 +1,26 @@
 const std = @import("std");
-const sdl = @cImport(@cInclude("SDL.h"));
 const id3 = @import("./id3.zig");
-const renderer = @import("video/renderer.zig");
 const black = @import("video/black.zig");
 const player = @import("video/player.zig");
+const r = @import("video/renderer.zig");
+const ui = @import("ui_lib.zig");
 const music = @import("./music.zig");
 const config = @import("./config.zig");
 const settings = @import("./video/settings.zig");
+const sdl = @cImport({
+    @cInclude("SDL.h");
+    @cInclude("SDL_image.h");
+});
 
 pub var nav: screens = screens.player;
 pub var quit = false;
+pub var w: u16 = 800;
+pub var h: u16 = 500;
 
 pub fn main() !void {
-    try config.init();
-
-    try music.init();
-
     while (!quit) {
-        switch (nav) {
-            screens.player => {
-                try renderer.init(player.init);
-                try renderer.render(player.render, player.eventHandler, player.free);
-            },
-            screens.settings => {
-                try renderer.init(settings.init);
-                try renderer.render(settings.render, settings.eventHandler, settings.free);
-            },
-            else => {
-                std.debug.print("{} not implemented yet :( \n", .{nav});
-            },
-        }
+        try r.init(black.init);
+        try r.render(black.render, black.eventHandler, black.free);
     }
 }
 pub const screens = enum {

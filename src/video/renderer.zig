@@ -1,9 +1,13 @@
 const std = @import("std");
+const ui = @import("../ui_lib.zig");
 const bytesToValue = std.mem.bytesToValue;
 const assert = std.debug.assert;
-const sdl = @cImport(@cInclude("SDL.h"));
-const sdl_img = @cImport(@cInclude("SDL_image.h"));
-const ttf = @cImport(@cInclude("SDL_ttf.h"));
+
+const sdl = @cImport({
+    @cInclude("SDL.h");
+    @cInclude("SDL_image.h");
+    @cInclude("SDL_ttf.h");
+});
 const music = @import("../music.zig");
 const main = @import("../main.zig");
 const space_ascci = 32;
@@ -11,25 +15,25 @@ const space_ascci = 32;
 pub var delay: c_uint = 32;
 const alloc = std.heap.page_allocator;
 
-pub const background: ttf.SDL_Color = .{
+pub const background: sdl.SDL_Color = .{
     .r = 23,
     .g = 23,
     .b = 23,
     .a = 255,
 };
-pub const gray: ttf.SDL_Color = .{
+pub const gray: sdl.SDL_Color = .{
     .r = 80,
     .g = 80,
     .b = 80,
     .a = 255,
 };
-pub const red: ttf.SDL_Color = .{
+pub const red: sdl.SDL_Color = .{
     .r = 255,
     .g = 80,
     .b = 80,
     .a = 255,
 };
-pub const white: ttf.SDL_Color = .{
+pub const white: sdl.SDL_Color = .{
     .r = 255,
     .g = 255,
     .b = 255,
@@ -44,12 +48,19 @@ pub const screen = struct {
     mousey: f64 = 0,
     w: u32 = 800,
     h: u32 = 500,
-    font: ?*ttf.TTF_Font = undefined,
+    font: ?*sdl.TTF_Font = undefined,
     fontSize: u16 = 12,
     delay: u16 = 34,
 };
 
-var new_screen = screen{};
+pub var new_screen = screen{};
+
+pub fn isPosInRBounds(rect: ui.rect, x: i32, y: i32) bool {
+    if (rect.x < x and rect.y < y and y < rect.h + rect.y and x < rect.w + rect.x) {
+        return true;
+    }
+    return false;
+}
 
 pub fn isPosInRectBounds(rect: sdl.SDL_Rect, x: i32, y: i32) bool {
     if (rect.x < x and rect.y < y and y < rect.h + rect.y and x < rect.w + rect.x) {
@@ -59,25 +70,26 @@ pub fn isPosInRectBounds(rect: sdl.SDL_Rect, x: i32, y: i32) bool {
 }
 
 pub fn init(onInit: fn (sc: *const screen) anyerror!void) !void {
-    if (new_screen.window == undefined) {
-        if (sdl.SDL_Init(sdl.SDL_INIT_VIDEO) != 0) {
-            sdl.SDL_Log("Unable to initialize SDL: %s", sdl.SDL_GetError());
-            return error.SDLInitializationFailed;
-        }
-
-        new_screen.window = sdl.SDL_CreateWindow("~~~~ RAYWAVEEE ~~~~", 200, 200, @intCast(new_screen.w), @intCast(new_screen.h), sdl.SDL_WINDOW_RESIZABLE) orelse
-            {
-            sdl.SDL_Log("Unable to create window: %s", sdl.SDL_GetError());
-            return error.SDLInitializationFailed;
-        };
-
-        new_screen.renderer = sdl.SDL_CreateRenderer(new_screen.window, -1, sdl.SDL_RENDERER_SOFTWARE);
-
-        _ = ttf.TTF_Init();
-
-        new_screen.font = ttf.TTF_OpenFont("C:\\Windows\\Fonts\\arialbi.ttf", new_screen.fontSize);
-        assert(new_screen.font != null);
+    if (sdl.SDL_Init(sdl.SDL_INIT_VIDEO) != 0) {
+        sdl.SDL_Log("Unable to initialize SDL: %s", sdl.SDL_GetError());
+        return error.SDLInitializationFailed;
     }
+
+    new_screen.window = sdl.SDL_CreateWindow("~~~~ RAYWAVEEE ~~~~", 200, 200, @intCast(new_screen.w), @intCast(new_screen.h), sdl.SDL_WINDOW_RESIZABLE) orelse
+        {
+        sdl.SDL_Log("Unable to create window: %s", sdl.SDL_GetError());
+        return error.SDLInitializationFailed;
+    };
+
+    new_screen.renderer = sdl.SDL_CreateRenderer(new_screen.window, -1, sdl.SDL_RENDERER_SOFTWARE);
+
+    _ = sdl.TTF_Init();
+
+    new_screen.font = sdl.TTF_OpenFont("C:\\Windows\\Fonts\\arialbi.ttf", new_screen.fontSize);
+    assert(new_screen.font != null);
+
+    new_screen.delay = 1000;
+
     try onInit(&new_screen);
 }
 
@@ -93,8 +105,8 @@ pub fn render(onRender: fn (sc: *const screen) anyerror!void, handleEvents: fn (
 
                     // TODO: check how sdl gpu usage works and remove this TEMPORARY fix
 
-                    if (event.window.event == sdl.SDL_WINDOWEVENT_FOCUS_GAINED) new_screen.delay = 32;
-                    if (event.window.event == sdl.SDL_WINDOWEVENT_FOCUS_LOST) new_screen.delay = 500;
+                    //if (event.window.event == sdl.SDL_WINDOWEVENT_FOCUS_GAINED) new_screen.delay = 32;
+                    //if (event.window.event == sdl.SDL_WINDOWEVENT_FOCUS_LOST) new_screen.delay = 500;
                 },
                 sdl.SDL_QUIT => {
                     main.quit = true;
@@ -158,7 +170,7 @@ pub const text_input = struct {
     }
 
     pub fn render(self: *Self, rect: sdl.SDL_Rect) void {
-        var text_surface: [*c]ttf.SDL_Surface = undefined;
+        var text_surface: [*c]sdl.SDL_Surface = undefined;
 
         var box = rect;
 
@@ -170,7 +182,7 @@ pub const text_input = struct {
         _ = sdl.SDL_SetRenderDrawColor(self.screen.renderer, 180, 180, 180, sdl.SDL_ALPHA_OPAQUE);
         _ = sdl.SDL_RenderDrawRect(self.screen.renderer, &rect);
 
-        text_surface = ttf.TTF_RenderUTF8_LCD(self.screen.font, @ptrCast(self.list.items), white, background);
+        text_surface = sdl.TTF_RenderUTF8_LCD(self.screen.font, @ptrCast(self.list.items), white, background);
         defer sdl.SDL_FreeSurface(@ptrCast(text_surface));
 
         const text_texture = sdl.SDL_CreateTextureFromSurface(self.screen.renderer, @ptrCast(text_surface));
