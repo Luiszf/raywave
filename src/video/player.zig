@@ -23,6 +23,8 @@ var search_rect: sdl.SDL_Rect = undefined;
 var list_rect: sdl.SDL_Rect = undefined;
 var play_rect: sdl.SDL_Rect = undefined;
 var prev_rect: sdl.SDL_Rect = undefined;
+var loop_rect: sdl.SDL_Rect = undefined;
+var shuffle_rect: sdl.SDL_Rect = undefined;
 var next_rect: sdl.SDL_Rect = undefined;
 var bar_rect: sdl.SDL_Rect = undefined;
 var progress_rect: sdl.SDL_Rect = undefined;
@@ -33,6 +35,8 @@ pub var play_texture: ?*sdl_img.SDL_Texture = undefined;
 pub var pause_texture: ?*sdl_img.SDL_Texture = undefined;
 pub var prev_texture: ?*sdl_img.SDL_Texture = undefined;
 pub var next_texture: ?*sdl_img.SDL_Texture = undefined;
+pub var shuffle_texture: ?*sdl_img.SDL_Texture = undefined;
+pub var loop_texture: ?*sdl_img.SDL_Texture = undefined;
 pub var settings_texture: ?*sdl_img.SDL_Texture = undefined;
 
 var font: ?*ttf.TTF_Font = undefined;
@@ -59,6 +63,8 @@ pub fn init(screen: *const r.screen) !void {
     play_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\play.png");
     pause_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\pause.png");
     prev_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\prev.png");
+    shuffle_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\shuffle.png");
+    loop_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\repeat.png");
     next_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\next.png");
     settings_texture = sdl_img.IMG_LoadTexture(@ptrCast(renderer), "C:\\users\\luis\\Development\\raywave\\src\\res\\settings.png");
 }
@@ -121,6 +127,7 @@ pub fn render(screen: *const r.screen) !void {
     } else {
         try list(renderer, music.musics.items, listCapacity, list_rect, "");
     }
+
     play_rect = .{
         .w = 30,
         .h = 30,
@@ -142,6 +149,24 @@ pub fn render(screen: *const r.screen) !void {
     };
 
     _ = sdl.SDL_RenderCopy(renderer, @ptrCast(prev_texture), null, @ptrCast(&prev_rect));
+
+    shuffle_rect = .{
+        .w = 30,
+        .h = 30,
+        .y = @intCast(h - 46),
+        .x = @intCast(play_rect.x - 120),
+    };
+
+    _ = sdl.SDL_RenderCopy(renderer, @ptrCast(shuffle_texture), null, @ptrCast(&shuffle_rect));
+
+    loop_rect = .{
+        .w = 30,
+        .h = 30,
+        .y = @intCast(h - 46),
+        .x = @intCast(play_rect.x + 120),
+    };
+
+    _ = sdl.SDL_RenderCopy(renderer, @ptrCast(loop_texture), null, @ptrCast(&loop_rect));
 
     next_rect = .{
         .w = 30,

@@ -17,6 +17,7 @@ pub var musics: std.ArrayList([]u8) = std.ArrayList([]u8).init(alloc);
 pub var index: u16 = 0;
 
 pub var isPaused = false;
+pub var inRepeat = false;
 pub var currentMusicInfo: musicDisplayInfo = undefined;
 var playingMusic: ?*sdl_mixer.Mix_Music = undefined;
 var volume: u8 = 64;
@@ -30,6 +31,9 @@ pub fn getCurPosition() f64 {
 
 pub fn setPosition(pos: f64) void {
     _ = sdl_mixer.Mix_SetMusicPosition(pos);
+}
+pub fn toggleRepeat() void {
+    inRepeat = !inRepeat;
 }
 
 pub fn playSongInIndex(i: u16) !void {
@@ -123,7 +127,7 @@ pub fn shuffle_musics() !void {
     try std.posix.getrandom(std.mem.asBytes(&seed));
     var rand = std.Random.Sfc64.init(seed);
     rand.random().shuffle([]u8, musics.items);
-}
+
 
 pub fn init() !void {
     hook.hook_set_dispatch_proc(dispacher);
@@ -145,11 +149,9 @@ pub fn init() !void {
 pub fn play() !bool {
     const status = sdl_mixer.Mix_PlayingMusic();
     if (status == 0) {
-        if ((musics.items.len - 1) == index) {
-            index = 0;
-        } else {
-            index += 1;
-        }
+
+        if (!inRepeat) increaseIndex();
+        
         playingMusic = sdl_mixer.Mix_LoadMUS(@ptrCast(musics.items[index]));
         _ = sdl_mixer.Mix_PlayMusic(playingMusic, 0);
         try getCurrentMusicInfo();
@@ -160,4 +162,12 @@ pub fn play() !bool {
     }
     sdl.SDL_Delay(34);
     return false;
+}
+
+pub fn increaseIndex() void {
+    if ((musics.items.len - 1) == index) {
+        index = 0;
+    } else {
+        index += 1;
+    }
 }
