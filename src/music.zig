@@ -62,7 +62,7 @@ pub fn pauseMusic() void {
     isPaused = !isPaused;
 }
 pub fn getCurrentMusicInfo() !void {
-    var split = std.mem.split(u8, musics.items[index], "\\");
+    var split = std.mem.splitSequence(u8, musics.items[index], "\\");
     while (split.next()) |entry| {
         currentMusicInfo.name = entry;
     }
@@ -118,6 +118,7 @@ pub fn list_musics() !void {
         }
     }
 }
+
 pub fn shuffle_musics() !void {
     var seed: u64 = undefined;
     try std.posix.getrandom(std.mem.asBytes(&seed));

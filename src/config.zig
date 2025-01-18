@@ -11,8 +11,6 @@ pub fn init() !void {
     var buffer: [100]u8 = undefined;
     const limit = try file.read(&buffer);
 
-    std.debug.print("limit: {d} \n", .{limit});
-
     if (limit != 0) {
         const json = try std.json.parseFromSlice([]const u8, alloc, buffer[0..limit], .{});
         path = json.value;
